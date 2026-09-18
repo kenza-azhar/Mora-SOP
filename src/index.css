@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@layer base {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
+  }
+}
+
+@media print {
+  /* Hide everything by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show only the SOP document area */
+  #sop-document-to-print,
+  #sop-document-to-print * {
+    visibility: visible;
+  }
+
+  /* Position the document at the top-left of the print page */
+  #sop-document-to-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important; /* Some padding for print margins */
+    box-shadow: none !important;
+    border: none !important;
+    background-color: white !important;
+    display: block !important;
+  }
+
+  /* Break the layout of parents for printing */
+  html, body {
+    height: auto !important;
+    background: white !important;
+  }
+
+  main, div, section {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* Ensure colors and backgrounds are printed */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ensure tables don't break awkwardly across pages */
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+  td, th {
+    border: 1px solid black !important;
+  }
+  .document-container {
+    padding: 0 !important;
+  }
+}

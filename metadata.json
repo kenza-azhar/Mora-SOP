@@ -1,0 +1,8 @@
+{
+  "name": "APLIKASI MORA & SOP",
+  "description": "Aplikasi modern untuk pembuatan Standar Operasional Prosedur (SOP) di lingkungan Kementerian Agama berbasis AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

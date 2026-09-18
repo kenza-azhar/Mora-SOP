@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "SOP": {
+      "title": "SOP",
+      "description": "Standard Operating Procedure document",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the user who owns this SOP" },
+        "satker1": { "type": "string" },
+        "satker2": { "type": "string" },
+        "madrasah": { "type": "string" },
+        "alamatMadrasah": { "type": "string" },
+        "namaKepala": { "type": "string" },
+        "nipKepala": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "nomorSop": { "type": "string" },
+        "tglPembuatan": { "type": "string" },
+        "tglRevisi": { "type": "string" },
+        "tglEfektif": { "type": "string" },
+        "judulSop": { "type": "string" },
+        "dasarHukum": { "type": "array", "items": { "type": "string" } },
+        "kualifikasiPelaksana": { "type": "array", "items": { "type": "string" } },
+        "keterkaitan": { "type": "array", "items": { "type": "string" } },
+        "peralatanPerlengkapan": { "type": "array", "items": { "type": "string" } },
+        "peringatan": { "type": "array", "items": { "type": "string" } },
+        "pencatatanPendataan": { "type": "array", "items": { "type": "string" } },
+        "prosedur": { "type": "array", "items": { "$ref": "Aktivitas" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "judulSop"]
+    },
+    "Aktivitas": {
+      "title": "Aktivitas",
+      "description": "A single step in a procedure",
+      "type": "object",
+      "properties": {
+        "nomor": { "type": "number" },
+        "aktivitas": { "type": "string" },
+        "pelaksana": { "type": "string" },
+        "simbol": { "type": "string", "enum": ["Terminator", "Process", "Decision", "Connector"] },
+        "mutuBaku": {
+          "type": "object",
+          "properties": {
+            "persyaratan": { "type": "string" },
+            "waktu": { "type": "string" },
+            "output": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "/sops/{sopId}": {
+      "schema": "SOP",
+      "description": "Collection of SOP documents"
+    }
+  }
+}
