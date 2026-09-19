@@ -64,6 +64,7 @@ import * as XLSX from 'xlsx';
 import { auth, db, hasCustomFirebaseConfig } from './firebase';
 import { FirebaseConfigModal } from './components/FirebaseConfigModal';
 import { NeonConfigModal } from './components/NeonConfigModal';
+import { AuthHelpModal } from './components/AuthHelpModal';
 import { 
   checkNeonStatus, 
   fetchSopsFromNeon, 
@@ -175,6 +176,7 @@ export default function App() {
   const [configModalMessage, setConfigModalMessage] = useState('');
   const [isNeonModalOpen, setIsNeonModalOpen] = useState(false);
   const [neonStatus, setNeonStatus] = useState<NeonDbStatus | null>(null);
+  const [isAuthHelpModalOpen, setIsAuthHelpModalOpen] = useState(false);
   
   // Auth input state
   const [loginEmail, setLoginEmail] = useState('');
@@ -260,7 +262,8 @@ export default function App() {
     }
 
     if (code === 'auth/operation-not-allowed') {
-      alert("Error: Metode 'Email/Password' belum diaktifkan di Firebase Console. Silakan buka Firebase Console > Authentication > Sign-in method dan aktifkan Email/Password.");
+      setIsAuthHelpModalOpen(true);
+      return;
     } else if (code === 'auth/invalid-credential') {
       if (action === 'login') {
         alert("Gagal Masuk: Email atau Password salah. Pastikan Anda sudah terdaftar.");
@@ -274,7 +277,8 @@ export default function App() {
     } else if (code === 'auth/wrong-password') {
       alert("Kata sandi salah. Silakan coba lagi atau gunakan fitur 'Lupa Kata Sandi?'.");
     } else if (code === 'auth/unauthorized-domain') {
-      alert("Domain web ini belum diizinkan di Firebase Authentication. Silakan tambahkan domain hosting Anda (misal: mora-sop.vercel.app) di Firebase Console > Authentication > Settings > Authorized domains.");
+      setIsAuthHelpModalOpen(true);
+      return;
     } else {
       alert(`Gagal ${action === 'login' ? 'Masuk' : action === 'register' ? 'Registrasi' : 'Kirim Email'}: ${msg}`);
     }
@@ -1134,8 +1138,27 @@ export default function App() {
                   {isAuthProcessing ? <Loader2 className="animate-spin mx-auto" /> : 'DAFTAR SEKARANG'}
                 </motion.button>
 
-                <button onClick={() => setIsRegistering(false)} className="w-full text-slate-500 text-sm font-bold mt-3">
+                <button onClick={() => setIsRegistering(false)} className="w-full text-slate-500 text-sm font-bold mt-3 hover:text-slate-800 transition">
                   Sudah punya akun? Masuk di sini
+                </button>
+
+                <div className="relative my-3 text-center">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
+                  <span className="relative bg-white px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Atau Coba Langsung</span>
+                </div>
+
+                <button 
+                  onClick={() => setIsGuestMode(true)}
+                  className="w-full border-2 border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/60 text-slate-700 font-bold py-3 rounded-2xl flex items-center justify-center gap-2 transition-all text-xs"
+                >
+                  Lanjutkan Tanpa Login (Mode Tamu) <ArrowRight size={14} />
+                </button>
+
+                <button 
+                  onClick={() => setIsAuthHelpModalOpen(true)}
+                  className="w-full mt-2 py-2.5 text-xs font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 rounded-xl flex items-center justify-center gap-1.5 transition-colors border border-amber-200"
+                >
+                  <ShieldCheck size={14} className="text-amber-600" /> Panduan Aktivasi Email/Password Firebase
                 </button>
 
                 <button 
@@ -1143,9 +1166,9 @@ export default function App() {
                     setConfigModalMessage("");
                     setIsConfigModalOpen(true);
                   }}
-                  className="w-full mt-3 py-2.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-slate-50 hover:bg-slate-100 rounded-xl flex items-center justify-center gap-1.5 transition-colors border border-slate-200"
+                  className="w-full mt-2 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-xl flex items-center justify-center gap-1.5 transition-colors border border-slate-200"
                 >
-                  <Settings size={14} /> Atur Konfigurasi Firebase
+                  <Settings size={13} /> Atur Konfigurasi Firebase
                 </button>
               </div>
             </div>
@@ -1164,6 +1187,12 @@ export default function App() {
               checkNeonStatus().then(status => setNeonStatus(status));
               fetchUserSops(user ? user.uid : 'guest');
             }}
+          />
+
+          <AuthHelpModal
+            isOpen={isAuthHelpModalOpen}
+            onClose={() => setIsAuthHelpModalOpen(false)}
+            onContinueAsGuest={() => setIsGuestMode(true)}
           />
         </div>
       );
@@ -1298,6 +1327,13 @@ export default function App() {
                 </button>
 
                 <button 
+                  onClick={() => setIsAuthHelpModalOpen(true)}
+                  className="w-full mt-2 py-2.5 text-xs font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 rounded-xl flex items-center justify-center gap-1.5 transition-colors border border-amber-200"
+                >
+                  <ShieldCheck size={14} className="text-amber-600" /> Panduan Aktivasi Email/Password Firebase
+                </button>
+
+                <button 
                   onClick={() => {
                     setConfigModalMessage("");
                     setIsConfigModalOpen(true);
@@ -1337,6 +1373,12 @@ export default function App() {
             checkNeonStatus().then(status => setNeonStatus(status));
             fetchUserSops(user ? user.uid : 'guest');
           }}
+        />
+
+        <AuthHelpModal
+          isOpen={isAuthHelpModalOpen}
+          onClose={() => setIsAuthHelpModalOpen(false)}
+          onContinueAsGuest={() => setIsGuestMode(true)}
         />
       </div>
     );
@@ -2121,6 +2163,12 @@ export default function App() {
           checkNeonStatus().then(status => setNeonStatus(status));
           fetchUserSops(user ? user.uid : 'guest');
         }}
+      />
+
+      <AuthHelpModal
+        isOpen={isAuthHelpModalOpen}
+        onClose={() => setIsAuthHelpModalOpen(false)}
+        onContinueAsGuest={() => setIsGuestMode(true)}
       />
     </div>
   );
