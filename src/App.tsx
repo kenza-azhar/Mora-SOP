@@ -37,7 +37,6 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { GoogleGenAI } from "@google/genai";
 import { 
   handleFirestoreError, 
   OperationType, 
@@ -407,96 +406,44 @@ export default function App() {
       return;
     }
 
-    if (!process.env.GEMINI_API_KEY) {
-      alert("GEMINI_API_KEY belum dikonfigurasi. Pastikan Environment Variable telah diatur di Vercel/Hosting Anda.");
-      return;
-    }
-
     setIsGenerating(true);
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) throw new Error("GEMINI_API_KEY tidak ditemukan");
-      
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: "gemini-flash-latest",
-        contents: `Hasilkan konten lengkap untuk Standar Operasional Prosedur (SOP) di Madrasah Kemenag Indonesia dengan judul: "${sopData.judulSop}".
-        Hasilkan data dalam format JSON murni. Pastikan pelaksana adalah jabatan yang ada di Madrasah (misal: Kepala Madrasah, Guru, Tata Usaha, Bendahara, Komite).
-        
-        {
-          "dasarHukum": ["pembukaan...", "..."],
-          "kualifikasiPelaksana": ["...", "..."],
-          "keterkaitan": ["...", "..."],
-          "peralatanPerlengkapan": ["...", "..."],
-          "peringatan": ["...", "..."],
-          "pencatatanPendataan": ["...", "..."],
-          "prosedur": [
-            { 
-              "nomor": 1, 
-              "aktivitas": "...", 
-              "pelaksana": "...", 
-              "simbol": "Terminator/Process/Decision/Connector",
-              "mutuBaku": { "persyaratan": "...", "waktu": "...", "output": "..." } 
-            }
-          ]
-        }
-        
-        PENTING: Berikan HANYA JSON murni tanpa markdown code blocks.
-        
-        PENTING untuk field 'simbol':
-        1. 'Terminator' untuk aktivitas awal (Mulai) dan akhir (Selesai).
-        2. 'Decision' jika aktivitas bersifat pemeriksaan atau butuh persetujuan (pilihan Ya/Tidak).
-        3. 'Process' untuk aktivitas pengerjaan rutin.
-        4. 'Connector' jika alur melompat atau berlanjut.`
+      const response = await fetch('/api/gemini/generate-sop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ judulSop: sopData.judulSop }),
       });
 
-      let text = response.text || '';
-      // Clean up markdown if AI still provides it
-      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      
-      const generated = JSON.parse(text || '{}');
-      setSopData(prev => ({
-        ...prev,
-        ...generated
-      }));
-      setSuccessMsg('SOP Berhasil digenerate!');
-      setTimeout(() => setSuccessMsg(''), 3000);
-    } catch (error: any) {
-      console.error("AI Generation Error:", error);
-      let errorMsg = "";
-      
-      try {
-        // Attempt to parse structured error from the response
-        if (typeof error.message === 'string' && (error.message.includes('{') || error.message.includes('code'))) {
-          // If it looks like JSON or contains common error markers
-          const rawMsg = error.message;
-          const jsonMatch = rawMsg.match(/\{.*\}/s);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            errorMsg = parsed?.error?.message || rawMsg;
-          } else {
-            errorMsg = rawMsg;
-          }
-        } else {
-          errorMsg = error.message || "Unknown error";
-        }
-      } catch (e) {
-        errorMsg = error.message || "Error parsing fail response";
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const errorMsg = result?.error || `Error ${response.status}: Gagal memproses AI SOP`;
+        throw new Error(errorMsg);
       }
 
-      if (errorMsg.includes("API key not valid")) {
-        alert("Gagal: API Key Gemini tidak valid. Periksa konfigurasi API Key Anda di Vercel Settings (Environment Variables).");
-      } else if (errorMsg.includes("denied access") || errorMsg.includes("403")) {
-        alert("Gagal (403): Akses Ditolak. Pastikan API Key Anda aktif dan memiliki akses ke Google AI SDK.");
-      } else if (errorMsg.includes("quota")) {
-        alert("Gagal: Kuota API Gemini habis.");
-      } else {
-        alert("Gagal mengenerate SOP: " + errorMsg);
+      if (!result?.data) {
+        throw new Error("Respon data dari server tidak lengkap.");
       }
+
+      setSopData(prev => ({
+        ...prev,
+        ...result.data,
+      }));
+      if (result?.isFallback) {
+        setSuccessMsg('SOP disusun menggunakan Format Standar Kemenag RI.');
+      } else {
+        setSuccessMsg('SOP Berhasil digenerate oleh AI!');
+      }
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch (error: any) {
+      console.error("AI Generation Error:", error);
+      const errMsg = error.message || "Gagal memproses SOP.";
+      alert(errMsg);
     } finally {
       setIsGenerating(false);
     }
   };
+
 
   const exportToPDF = async () => {
     const doc = new jsPDF('p', 'mm', 'a4');
